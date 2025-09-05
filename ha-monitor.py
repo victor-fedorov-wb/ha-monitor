@@ -79,7 +79,7 @@ class SimpleHAStatusMonitor:
             print(f"Error: {e}")
 
 
-# Запуск мониторинга
+# Starting monitoring
 if __name__ == "__main__":
     monitor = SimpleHAStatusMonitor()
     monitor.start()
