@@ -26,25 +26,22 @@ class SimpleHAStatusMonitor:
                 print(f"Failed subscribe to {TOPIC_NAME}")
             print("✓ await status for Home Assistant...")
         else:
-            print(f"✗ Connection error: {reason_code} - {mqtt.error_string(reason_code)}")
+            print(
+                f"✗ Connection error: {reason_code} - {mqtt.error_string(reason_code)}"
+            )
 
     def on_message(self, client, userdata, msg):
         if msg.topic == TOPIC_NAME:
             new_status = msg.payload.decode().strip().lower()
             timestamp = datetime.now().strftime("%H:%M:%S")
-
-            # Сохраняем предыдущий статус
+            # Save prev status
             self.previous_status = self.current_status
             self.current_status = new_status
-
-            # Всегда выводим статус
             print(f"[{timestamp}] Status: {new_status}")
-
-            # Проверяем переход в online
-            if ((not self.previous_status and
-                  self.current_status == "online") or
-                    (self.previous_status == "offline" and
-                     self.current_status == "online")):
+            # Check status "online"
+            if (not self.previous_status and self.current_status == "online") or (
+                self.previous_status == "offline" and self.current_status == "online"
+            ):
                 self.wb_engine_start()
 
     def on_disconnect(self, client, *args):
@@ -52,14 +49,16 @@ class SimpleHAStatusMonitor:
 
     def wb_engine_start(self):
         """
-        Стартуем бинарник wb-engine-helper с флагом --start
+        Start wb-engine-helper --start
         :return:
         """
         try:
             print("Try to start wb-engine-helper...")
-            res = subprocess.run(["wb-engine-helper", "--start"],
-                                 capture_output=True,
-                                 text=True, )
+            res = subprocess.run(
+                ["wb-engine-helper", "--start"],
+                capture_output=True,
+                text=True,
+            )
             print(res.stdout)
 
         except subprocess.CalledProcessError as e:
@@ -67,7 +66,7 @@ class SimpleHAStatusMonitor:
             print(f"Stderr: {e.stderr.decode()}")
 
     def start(self):
-        # Используем актуальную версию callback API
+        # Use actual callback API (v2)
         client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2)
         client.on_connect = self.on_connect
         client.on_message = self.on_message
