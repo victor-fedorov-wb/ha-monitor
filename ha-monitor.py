@@ -41,14 +41,11 @@ class SimpleHAStatusMonitor:
             # Всегда выводим статус
             print(f"[{timestamp}] Status: {new_status}")
 
-            # Проверяем переход из offline в online
-            if (self.previous_status == "offline" and
-                    self.current_status == "online"):
-                print("homeassistant status: offline->online")
-                self.wb_engine_start()
-            elif (not self.previous_status and
-                  self.current_status == "online"):
-                print("First start")
+            # Проверяем переход в online
+            if ((not self.previous_status and
+                  self.current_status == "online") or
+                    (self.previous_status == "offline" and
+                     self.current_status == "online")):
                 self.wb_engine_start()
 
     def on_disconnect(self, client, *args):
@@ -60,6 +57,7 @@ class SimpleHAStatusMonitor:
         :return:
         """
         try:
+            print("Try to start wb-engine-helper...")
             res = subprocess.run(["wb-engine-helper", "--start"],
                                  capture_output=True,
                                  text=True, )
