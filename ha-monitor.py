@@ -1,34 +1,39 @@
 #!/usr/bin/env python3
 
 import subprocess
-import sys
-import paho.mqtt.client as mqtt
+import sys, os
 import logging
+import paho.mqtt.client as mqtt
 
 # Настройки сервисов хранить в /etc/ИМЯ_СЕРВИСА.conf в формате JSON.
 
-TOPIC_NAME = "homeassistant/status"
-BROKER_IP = "localhost"
-BROKER_PORT = 1883
+TOPIC_NAME = os.getenv("HA_TOPIC_NAME", "homeassistant/status")
+BROKER_IP = os.getenv("BROKER_IP", "localhost")
+BROKER_PORT = os.getenv("BROKER_PORT", 1883)
 
 # setup logging
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s %(levelname)s %(message)s",
     handlers=[logging.StreamHandler(sys.stdout)],
-    stream=sys.stdout,
 )
 
 logger = logging.getLogger(__name__)
 
 
 class SimpleHAStatusMonitor:
-    # Use actual callback API (v2)
+    """
+    Monitor Home Assistant status via MQTT.
+    Use actual callback API (v2)
+    """
+
     def __init__(
         self,
         broker=BROKER_IP,
-        port=BROKER_PORT,
+        port=int(BROKER_PORT),
     ):
+        logger.debug(f"BROKER_IP {BROKER_IP}")
+        logger.debug(f"BROKER_PORT {BROKER_PORT}")
         self.broker = broker
         self.port = port
         self.current_status = None
