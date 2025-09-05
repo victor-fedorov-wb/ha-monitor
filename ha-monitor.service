@@ -1,0 +1,14 @@
+[Unit]
+Description=HA Monitor mqtt topic
+After=wb-rules.service
+[Service]
+Type=simple
+Restart=always
+RestartSec=3
+User=root
+ExecStart=/usr/bin/ha-monitor.py
+[Install]
+WantedBy=multi-user.target
+
+
+
