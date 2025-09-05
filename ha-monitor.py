@@ -19,7 +19,6 @@ class SimpleHAStatusMonitor:
 
     def on_connect(self, client, userdata, flags, reason_code, properties):
         if reason_code == 0:
-            # print(f"✓ Connected to {self.broker}:{self.port}")
             result = client.subscribe(TOPIC_NAME)
             if result[0] == 0:
                 print(f"Subscribed to {TOPIC_NAME}")
