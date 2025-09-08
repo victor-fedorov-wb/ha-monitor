@@ -97,8 +97,10 @@ class SimpleHAStatusMonitor:
                 capture_output=True,
                 text=True,
             )
-
-            logger.info(res.stdout)
+            if len(res.stdout) > 0:
+                logger.info(res.stdout)
+            else:
+                logger.info(f"wb-engine-helper started OK")
 
         except subprocess.CalledProcessError as e:
             logger.error(f"Command failed with exit code {e.returncode}")
