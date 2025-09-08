@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 
 import subprocess
-import sys, os
+import sys
+import os
 import logging
 import signal
 import paho.mqtt.client as mqtt
@@ -31,8 +32,8 @@ class SimpleHAStatusMonitor:
         broker=BROKER_IP,
         port=int(BROKER_PORT),
     ):
-        logger.debug(f"BROKER_IP {BROKER_IP}")
-        logger.debug(f"BROKER_PORT {BROKER_PORT}")
+        logger.debug("BROKER_IP %s", broker)
+        logger.debug("BROKER_PORT %s", port)
         self.broker = broker
         self.port = port
         self.current_status = None
@@ -49,12 +50,14 @@ class SimpleHAStatusMonitor:
         if reason_code == 0:
             result = client.subscribe(TOPIC_NAME)
             if result[0] == 0:
-                logger.info(f"Subscribed to {TOPIC_NAME}")
+                logger.info("Subscribed to %s topic", TOPIC_NAME)
             else:
-                logger.error(f"Failed subscribe to {TOPIC_NAME}")
+                logger.error("Failed subscribe to %s topic", TOPIC_NAME)
         else:
             logger.error(
-                f"Connection error: {reason_code} - {mqtt.error_string(reason_code)}"
+                "Connection error: %s - %s",
+                reason_code,
+                mqtt.error_string(reason_code),
             )
 
     def on_message(
@@ -63,12 +66,19 @@ class SimpleHAStatusMonitor:
         userdata,
         msg,
     ):
+        """
+        Checking status On message in topic
+        :param client:
+        :param userdata:
+        :param msg:
+        :return:
+        """
         if msg.topic == TOPIC_NAME:
             new_status = msg.payload.decode().strip().lower()
             # Save prev status
             self.previous_status = self.current_status
             self.current_status = new_status
-            logger.info(f"Status: {new_status}")
+            logger.info("Status: %s", new_status)
             # Check status "online"
             if (not self.previous_status and self.current_status == "online") or (
                 self.previous_status == "offline" and self.current_status == "online"
@@ -83,6 +93,15 @@ class SimpleHAStatusMonitor:
         reason_code=None,
         properties=None,
     ):
+        """
+        Disconnect callback
+        :param client:
+        :param userdata:
+        :param disconnect_flags:
+        :param reason_code:
+        :param properties:
+        :return:
+        """
         logger.error("Connection lost")
 
     def wb_engine_start(self):
@@ -96,17 +115,22 @@ class SimpleHAStatusMonitor:
                 ["wb-engine-helper", "--start"],
                 capture_output=True,
                 text=True,
+                check=False,
             )
             if len(res.stdout) > 0:
                 logger.info(res.stdout)
             else:
-                logger.info(f"wb-engine-helper started OK")
+                logger.info("wb-engine-helper started OK")
 
         except subprocess.CalledProcessError as e:
-            logger.error(f"Command failed with exit code {e.returncode}")
-            logger.error(f"Stderr: {e.stderr.decode()}")
+            logger.error("Command failed with exit code %s", e.returncode)
+            logger.error("Stderr: %s", e.stderr.decode())
 
     def start(self):
+        """
+        Main function in class
+        :return:
+        """
         # Use actual callback API (v2)
         client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2)
         client.on_connect = self.on_connect
@@ -117,9 +141,15 @@ class SimpleHAStatusMonitor:
             client.connect(self.broker, self.port, 60)
             client.loop_forever()
         except Exception as e:
-            logger.error(f"Error: {e}")
+            logger.error("Error: %s", e)
 
     def signal_exit(self, signum, frame):
+        """
+        System event listner: SIGTERM, SIGINT
+        :param signum:
+        :param frame:
+        :return:
+        """
         sys.exit(0)
 
 
