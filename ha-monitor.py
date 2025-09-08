@@ -97,7 +97,8 @@ class SimpleHAStatusMonitor:
                 capture_output=True,
                 text=True,
             )
-            logger.warning(res.stdout)
+
+            logger.info(res.stdout)
 
         except subprocess.CalledProcessError as e:
             logger.error(f"Command failed with exit code {e.returncode}")
