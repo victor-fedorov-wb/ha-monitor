@@ -4,11 +4,10 @@ After=wb-rules.service
 [Service]
 Type=simple
 Restart=always
-RestartSec=3
+RestartSec=2
+RestartPreventExitStatus=2 3 4 5 6
+SuccessExitStatus=7
 User=root
-ExecStart=/usr/bin/ha-monitor.py
+ExecStart=/usr/bin/ha-monitor
 [Install]
 WantedBy=multi-user.target
-
-
-

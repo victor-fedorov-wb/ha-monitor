@@ -3,9 +3,8 @@
 import subprocess
 import sys, os
 import logging
+import signal
 import paho.mqtt.client as mqtt
-
-# Настройки сервисов хранить в /etc/ИМЯ_СЕРВИСА.conf в формате JSON.
 
 TOPIC_NAME = os.getenv("HA_TOPIC_NAME", "homeassistant/status")
 BROKER_IP = os.getenv("BROKER_IP", "localhost")
@@ -117,8 +116,13 @@ class SimpleHAStatusMonitor:
         except Exception as e:
             logger.error(f"Error: {e}")
 
+    def signal_exit(self, signum, frame):
+        sys.exit(0)
+
 
 # Starting monitoring
 if __name__ == "__main__":
     monitor = SimpleHAStatusMonitor()
+    signal.signal(signal.SIGINT, monitor.signal_exit)
+    signal.signal(signal.SIGTERM, monitor.signal_exit)
     monitor.start()
