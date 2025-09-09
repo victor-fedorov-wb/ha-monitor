@@ -44,10 +44,9 @@ class SimpleHAStatusMonitor:
         client,
         userdata,
         flags,
-        reason_code,
-        properties,
+        rc,
     ):
-        if reason_code == 0:
+        if rc == 0:
             result = client.subscribe(TOPIC_NAME)
             if result[0] == 0:
                 logger.info("Subscribed to %s topic", TOPIC_NAME)
@@ -56,8 +55,8 @@ class SimpleHAStatusMonitor:
         else:
             logger.error(
                 "Connection error: %s - %s",
-                reason_code,
-                mqtt.error_string(reason_code),
+                rc,
+                mqtt.error_string(rc),
             )
 
     def on_message(
@@ -85,21 +84,12 @@ class SimpleHAStatusMonitor:
             ):
                 self.wb_engine_start()
 
-    def on_disconnect(
-        self,
-        client,
-        userdata=None,
-        disconnect_flags=None,
-        reason_code=None,
-        properties=None,
-    ):
+    def on_disconnect(self, client, userdata, rc):
         """
         Disconnect callback
         :param client:
         :param userdata:
-        :param disconnect_flags:
-        :param reason_code:
-        :param properties:
+        :param rc:
         :return:
         """
         logger.error("Connection lost")
@@ -132,7 +122,7 @@ class SimpleHAStatusMonitor:
         :return:
         """
         # Use actual callback API (v2)
-        client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2)
+        client = mqtt.Client()
         client.on_connect = self.on_connect
         client.on_message = self.on_message
         client.on_disconnect = self.on_disconnect
@@ -155,7 +145,7 @@ class SimpleHAStatusMonitor:
 
 # Starting monitoring
 if __name__ == "__main__":
-    monitor = SimpleHAStatusMonitor()
+    monitor = SimpleHAStatusMonitor(broker="192.168.88.99")
     signal.signal(signal.SIGINT, monitor.signal_exit)
     signal.signal(signal.SIGTERM, monitor.signal_exit)
     monitor.start()
