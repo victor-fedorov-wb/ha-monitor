@@ -24,7 +24,6 @@ logger = logging.getLogger(__name__)
 class SimpleHAStatusMonitor:
     """
     Monitor Home Assistant status via MQTT.
-    Use actual callback API (v2)
     """
 
     def __init__(
