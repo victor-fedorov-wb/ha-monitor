@@ -5,11 +5,12 @@ import sys
 import os
 import logging
 import signal
+import traceback
 import paho.mqtt.client as mqtt
 
 TOPIC_NAME = os.getenv("HA_TOPIC_NAME", "homeassistant/status")
 BROKER_IP = os.getenv("BROKER_IP", "localhost")
-BROKER_PORT = os.getenv("BROKER_PORT", 1883)
+BROKER_PORT = int(os.getenv("BROKER_PORT", "1883"))
 
 # setup logging
 logging.basicConfig(
@@ -29,7 +30,7 @@ class SimpleHAStatusMonitor:
     def __init__(
         self,
         broker=BROKER_IP,
-        port=int(BROKER_PORT),
+        port=BROKER_PORT,
     ):
         logger.debug("BROKER_IP %s", broker)
         logger.debug("BROKER_PORT %s", port)
@@ -106,31 +107,33 @@ class SimpleHAStatusMonitor:
                 text=True,
                 check=False,
             )
-            if len(res.stdout) > 0:
+            if res.returncode != 0:
+                logger.error("wb-engine-helper failed with code %s", res.returncode)
+                logger.error("stderr: %s", res.stderr)
+            elif res.stdout.strip():
                 logger.info(res.stdout)
             else:
                 logger.info("wb-engine-helper started OK")
-
-        except subprocess.CalledProcessError as e:
-            logger.error("Command failed with exit code %s", e.returncode)
-            logger.error("Stderr: %s", e.stderr.decode())
+        except Exception as e:
+            logger.error("Unexpected error: %s", e)
 
     def start(self):
         """
         Main function in class
         :return:
         """
-        # Use actual callback API (v2)
         client = mqtt.Client()
         client.on_connect = self.on_connect
         client.on_message = self.on_message
         client.on_disconnect = self.on_disconnect
-
         try:
             client.connect(self.broker, self.port, 60)
+            client.reconnect_delay_set(min_delay=1, max_delay=30)
             client.loop_forever()
         except Exception as e:
             logger.error("Error: %s", e)
+            exc_type, exc_val, exc_tb = sys.exc_info()
+            logger.error(traceback.print_exception(exc_type, exc_val, exc_tb))
 
     def signal_exit(self, signum, frame):
         """
@@ -144,7 +147,7 @@ class SimpleHAStatusMonitor:
 
 # Starting monitoring
 if __name__ == "__main__":
-    monitor = SimpleHAStatusMonitor(broker="192.168.88.99")
+    monitor = SimpleHAStatusMonitor()
     signal.signal(signal.SIGINT, monitor.signal_exit)
     signal.signal(signal.SIGTERM, monitor.signal_exit)
     monitor.start()
