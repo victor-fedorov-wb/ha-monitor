@@ -1,13 +1,14 @@
 [Unit]
-Description=HA Monitor mqtt topic
+Description=Part of wb-engine for fixing HA after restarting
 After=wb-rules.service
+
 [Service]
 Type=simple
-Restart=always
+Restart=on-failure
 RestartSec=2
 RestartPreventExitStatus=2 3 4 5 6
 SuccessExitStatus=7
-User=root
 ExecStart=/usr/bin/ha-monitor
+
 [Install]
 WantedBy=multi-user.target
